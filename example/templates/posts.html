@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row m-t-2">
+    <div style="min-width: 45vw">
+        <h3>activity for {{ username }}</h3>
+        {% for activity in activities %}
+            <div class="card">
+            <p>
+                <a href="{{ activity.subject_url }}">{{ activity.subject }}</a>
+                {{ activity.verb }}
+                {% if activity.object %}
+                    <a href="{{ activity.object_url }}">{{ activity.object }}</a>
+                {% endif %}
+                &nbsp; &nbsp; <small>{{ activity.date }}</small>
+            </p>
+            </div>
+        {% endfor %}
+        <h3>posts for {{ username }}</h3>
+        {% for post in posts %}
+            <p>{{ post }} - {{ post.body }}</p>
+        {% endfor %}
+
+    </div>
+    <div>
+        <div class="card">
+            <h3>New post</h3>
+            <form action="/new-post/" method="POST">
+                {% csrf_token %}
+                {{ micro_post_form.as_p }}
+                <input type="submit" />
+            </form>
+        </div>
+        <br />
+        <hr />
+
+
+        <h3>Edit author: {{username }}</h3>
+        <form action="." method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" />
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+

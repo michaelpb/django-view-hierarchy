@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="column" style="min-width: 500px">
+        <div class="card" style="min-width: 500px">
+            <h3>New author</h3>
+            <form action="/new-author/" method="POST">
+                {% csrf_token %}
+                {{ author_form.as_p }}
+                <input type="submit" />
+            </form>
+        </div>
+        <br />
+
+        <div class="card">
+            <h3>New post</h3>
+            <form action="/new-post/" method="POST">
+                {% csrf_token %}
+                {{ micro_post_form.as_p }}
+                <input type="submit" />
+            </form>
+        </div>
+        <br />
+
+        <div class="card">
+            <h3>New follow</h3>
+            <form action="/new-follow/" method="POST">
+                {% csrf_token %}
+                {{ follow_form.as_p }}
+                <input type="submit" />
+            </form>
+        </div>
+    </div>
+    <div class="column">
+        <ul>
+            {% for author in authors %}
+                <li><a href="{{ author.get_absolute_url|urlencode }}">{{ author }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock content %}
+
+

@@ -1,0 +1,7 @@
+django==1.10.8 # pyup: >=1.10,<1.11
+
+# Your app requirements.
+-r ../requirements_test.txt
+
+# Your app in editable mode.
+-e ../
