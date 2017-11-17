@@ -11,9 +11,8 @@ Django DjangoViewHiearchy
 .. image:: https://codecov.io/gh/michaelpb/django_view_hierarchy/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/michaelpb/django_view_hierarchy
 
-* **WIP:** This app is still being developed and documented! Use at your own
-  risk.
-
+* **WIP:** This app is still being developed and documented! Use at your
+  own risk.
 
 * **NOTE:** Presently *only* supports Python 3.5+ and Django 1.9+ (see `issue
   #1 <https://github.com/michaelpb/django_view_hierarchy/issues/1>`_)
