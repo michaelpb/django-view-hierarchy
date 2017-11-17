@@ -3,9 +3,9 @@ import re
 from django.conf.urls import url
 from contextlib import contextmanager
 
-from django_view_hierarchy.decorators import add_breadcrumbs
+from django_view_hierarchy.decorators import add_all_breadcrumbs
 
-GROUP_RE = re.compile(r'\(?P[^\)]+\)')
+GROUP_RE = re.compile(r'\(?P<(\w+)>[^\)]+\)')
 
 def _flatten_hierarchy(hierarchy, prefix=''):
     results = []
@@ -22,31 +22,56 @@ def _flatten_hierarchy(hierarchy, prefix=''):
     # To make predictable re. ordering, always return alphabetically
     return sorted(results, key=lambda item: item[0])
 
-def _wrap_view(parents, view):
+def _wrap_view(parents, original_view):
     # TODO: Properly keep track of how deep each arg and kwarg we have
+    # Once tested, refactor To not loop through parents
     parent_list = []
-    for parent in parents:
-        parent_list.append((parent, 43))
-    return add_breadcrumbs(parent_list)(view)
+    #import code;_g=globals();_g.update(locals());code.InteractiveConsole(_g).interact();
+    for parent, arg_names in parents:
+        parent_list.append((parent, arg_names))
 
-def _generate_breadcrumb_hierarchy(hierarchy, parent_views=tuple(), count=0):
+    view = None
+    if hasattr(original_view, 'as_view'):
+        # Is a class based original_view
+        view = original_view.as_view()
+    else:
+        raise ValueError('Only CBV presently supported: %s' % str(view))
+
+    # Wrap view with the add_all_breadcrumbs helper
+    wrapped_view = add_all_breadcrumbs(parent_list)(view)
+    original_view._plain_view = wrapped_view
+
+    # Set up view name variables
+    if original_view.view_name is None:
+        view_name = original_view.__name__
+        original_view.view_name = view_name
+    else:
+        view_name = original_view.view_name
+    wrapped_view._view_name = view_name
+
+    # Return prepped wrapped view
+    return wrapped_view
+
+def _generate_breadcrumb_hierarchy(hierarchy, views=tuple(), args=tuple()):
     results = {}
 
-    for key, value in hierarchy.items():
+    for key, view in hierarchy.items():
+        parents = views
         if key == '':
-            parents = parent_views
+            pass  # Doesn't actually add anything, parents is this one
         elif '' in hierarchy:
-            parents = parent_views + (hierarchy[''], )
+            pair = (hierarchy[''], args)
+            parents = views + (pair, )
 
-        # Count how many positional args are in each view
-        total_group_count = count + len(GROUP_RE.findall(key))
+        # args how many positional args are in each view
+        all_args = args + tuple(GROUP_RE.findall(key))
 
-        if isinstance(value, dict):
+        if isinstance(view, dict):
             # Recurse into subvalues, maintaining parent views
             results[key] = _generate_breadcrumb_hierarchy(
-                value,
-                parent_views=parents,
-                count=total_group_count
+                view,
+                views=parents,
+                args=all_args,
             )
         else:
             results[key] = _wrap_view(parents, view)
@@ -79,10 +104,9 @@ def view_hierarchy(hierarchy):
         url('^users/(?P<uid>\d+)/activity/$', user_view_activity),
     ]
     '''
-    flattened = _flatten_hierarchy('', hierarchy)
+    wrapped_hierarchy = _generate_breadcrumb_hierarchy(hierarchy)
+    flattened = _flatten_hierarchy(wrapped_hierarchy)
     return [
-        url(path, view) in flattened
+        url(path, view, name=view._view_name) for path, view in flattened
     ]
-
-
 

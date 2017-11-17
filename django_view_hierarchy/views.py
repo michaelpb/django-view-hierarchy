@@ -1,26 +1,26 @@
+from django.urls import reverse
 
+def get_breadcrumb_info_from_view(view):
+    url = view.get_reverse_url()
+    if view.breadcrumb:
+        return str(view.breadcrumb), url
+    return view.get_breadcrumb(), url
 
-'''
-def view(request, *args, **kwargs):
-	self = cls(**initkwargs)
-	if hasattr(self, 'get') and not hasattr(self, 'head'):
-		self.head = self.get
-	self.request = request
-	self.args = args
-	self.kwargs = kwargs
-'''
-
-def prep_cbv_and_get_breadcrumb(cls, request, args, kwargs):
-    if cls.breadcrumb:
-        return str(cls.breadcrumb)
-    self = cls()
-    self.request = request
-    self.args = args
-    self.kwargs = kwargs
-    return self.get_breadcrumb()
+def prep_cbv(cls, request, kwargs, args):
+    instance = cls()
+    if hasattr(instance, 'get') and not hasattr(instance, 'head'):
+        instance.head = instance.get
+    instance.request = request
+    instance.args = args
+    instance.kwargs = kwargs
+    return instance
 
 class BreadcrumbMixin:
     breadcrumb = None
+    view_name = None
+
+    def get_reverse_url(self):
+        return reverse(self.view_name, args=self.args, kwargs=self.kwargs)
 
     def get_breadcrumb(self):
         if self.breadcrumb:
@@ -33,21 +33,28 @@ class BreadcrumbMixin:
 
     def set_request_breadcrumbs(self):
         bc_sources = self.request.breadcrumbs.bc_sources
-        for bc_source, arg_count in bc_sources:
-            if not hasattr(bc_source, 'breadcrumb'):
+        for cbv, arg_names in bc_sources:
+            if not hasattr(cbv, 'breadcrumb'):
                 raise ValueError('"%s" invalid breadcrumb view'
-                                 % str(bc_source))
+                                 % str(cbv))
+            # TODO: Fix this:
+            arg_count = len(arg_names)
             args = self.args[:arg_count]
-            breadcrumb_str = prep_cbv_and_get_breadcrumb(
-                self.request,
-                self.kwargs,
-                args,
-            )
-            # self.request.breadcrumbs.append_text(breadcrumb_str)
+            kwargs = {
+                key: value for key, value in self.kwargs.items()
+                if key in arg_names
+            }
+            instance = prep_cbv(cbv, self.request, kwargs, args)
+            title, url = get_breadcrumb_info_from_view(instance)
+            self.request.breadcrumbs.append(title, url)
 
-    def dispatch(self, *args, **kwargs)):
+        # Finally, append current breadcrumb
+        title, url = get_breadcrumb_info_from_view(self)
+        self.request.breadcrumbs.append(title, url)
+
+    def dispatch(self, *args, **kwargs):
         self.set_request_breadcrumbs()
-        super().dispatch(*args, **kwargs)
+        return super().dispatch(*args, **kwargs)
 
 
 

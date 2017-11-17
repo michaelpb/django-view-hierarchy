@@ -7,12 +7,11 @@ test_helpers
 
 Tests for `django_view_hierarchy` helper functions and classes.
 """
+from unittest.mock import MagicMock
+
 from django.test import SimpleTestCase
 
 from django_view_hierarchy import helpers
-
-from django.views.generic import ListView
-from django.views import View
 
 # Some helper functions
 def user_list(request): pass
@@ -30,31 +29,6 @@ TEST_HIERARCHY = {
     },
     'posts': post_list,
 }
-
-from django.views import View
-
-class UserListView(View):
-    breadcrumb = 'User'
-
-class UserDetailView(View):
-    breadcrumb = None
-
-    def get_breadcrumb(self):
-        return 'User Name'
-
-class UserActivityDetailView(UserDetailView):
-    breadcrumb = 'Activity'
-
-TEST_BREADCRUMB_HIERARCHY = {
-    'users': {
-        '': UserListView,
-        '(?P<pk>\d+)': {
-            '': UserDetailView,
-            'activity': UserActivityDetailView,
-        },
-    },
-}
-
 
 class TestFlattenHierarchy(SimpleTestCase):
     def test_empty_hierarchy(self):
@@ -99,4 +73,90 @@ class TestFlattenHierarchy(SimpleTestCase):
             (r'^users/(?P<uid>\d+)/activity/$', user_view_activity),
         ])
 
+
+class TestGenerateBreadcrumbHierarchy(SimpleTestCase):
+    def test_empty_hierarchy(self):
+        results = helpers._generate_breadcrumb_hierarchy({})
+        self.assertEqual(results, {})
+
+    def test_single_flat_hierarchy(self):
+        # Test a few properties of a flat hierarchy
+        request = MagicMock()
+        request.was_called = False
+        def fake_view(request):
+            self.assertTrue(hasattr(request, 'breadcrumbs'))
+            # Breadcrumbs length should be 0
+            self.assertEqual(request.breadcrumbs.breadcrumbs, [])
+            self.assertEqual(request.breadcrumbs.bc_sources, [])
+            request.was_called = True
+
+        FakeCBV = MagicMock()
+        FakeCBV.as_view.return_value = fake_view
+
+        results = helpers._generate_breadcrumb_hierarchy({
+            'a': FakeCBV,
+        })
+        self.assertEqual(set(results.keys()), set('a'))
+        self.assertTrue(hasattr(results['a'], '__call__'))
+        self.assertFalse(request.was_called)
+        results['a'](request)
+        self.assertTrue(request.was_called)
+
+    def test_layered_hierarchy(self):
+        request = MagicMock()
+        request.was_called = False
+        def fake_view(request):
+            self.assertTrue(hasattr(request, 'breadcrumbs'))
+            # Breadcrumbs length should be 0
+            self.assertEqual(len(request.breadcrumbs.breadcrumbs), 0)
+            # But sources length should be 2
+            sources = request.breadcrumbs.bc_sources
+            self.assertEqual(len(sources), 2)
+
+            # Ensure that there are no parameters for any breadcrumbs
+            args_set = set(args for view, args in sources)
+            self.assertEqual(args_set, set([tuple()]))
+            request.was_called = True
+
+        FakeCBV = MagicMock()
+        FakeCBV.as_view.return_value = fake_view
+
+        results = helpers._generate_breadcrumb_hierarchy({
+            'a': {
+                '': MagicMock(),
+                'b': {
+                    '': MagicMock(),
+                    'c': FakeCBV,
+                },
+            },
+        })
+        self.assertEqual(set(results.keys()), set('a'))
+        self.assertFalse(request.was_called)
+        results['a']['b']['c'](request)
+        self.assertTrue(request.was_called)
+
+    def test_layered_hierarchy_with_parameters(self):
+        request = MagicMock()
+        request.was_called = False
+        def fake_view(request):
+            # Ensure that there are 1 and 2 params for breadcrumbs
+            sources = request.breadcrumbs.bc_sources
+            self.assertEqual([count for view, count in sources],
+                [('g', ), ('g', 'pk')])
+            request.was_called = True
+
+        FakeCBV = MagicMock()
+        FakeCBV.as_view.return_value = fake_view
+        results = helpers._generate_breadcrumb_hierarchy({
+            r'u-(?P<g>\d+)': {
+                '': MagicMock(),
+                r'(?P<pk>\d+)': {
+                    '': MagicMock(),
+                    'activity': FakeCBV,
+                },
+            },
+        })
+        self.assertFalse(request.was_called)
+        results[r'u-(?P<g>\d+)'][r'(?P<pk>\d+)']['activity'](request)
+        self.assertTrue(request.was_called)
 
