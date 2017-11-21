@@ -23,25 +23,25 @@ def _flatten_hierarchy(hierarchy, prefix=''):
     return sorted(results, key=lambda item: item[0])
 
 def _wrap_view(parents, original_view):
-    # TODO: Properly keep track of how deep each arg and kwarg we have
-    # Once tested, refactor To not loop through parents
-    parent_list = []
-    #import code;_g=globals();_g.update(locals());code.InteractiveConsole(_g).interact();
+    # TODO: Once tested, refactor To not loop through parents
+    parent_views = []
     for parent, arg_names in parents:
-        parent_list.append((parent, arg_names))
+        parent_views.append((parent, arg_names))
 
-    view = None
     if hasattr(original_view, 'as_view'):
         # Is a class based original_view
         view = original_view.as_view()
+    elif hasattr(original_view, 'breadcrumb'):
+        view = original_view
     else:
-        raise ValueError('Only CBV presently supported: %s' % str(view))
+        view_name = original_view.__name__
+        raise ValueError('Unsupported view: %s' % view_name)
 
     # Wrap view with the add_all_breadcrumbs helper
-    wrapped_view = add_all_breadcrumbs(parent_list)(view)
+    wrapped_view = add_all_breadcrumbs(parent_views)(view)
     original_view._plain_view = wrapped_view
 
-    # Set up view name variables
+    # Set up view name variables from view
     if original_view.view_name is None:
         view_name = original_view.__name__
         original_view.view_name = view_name

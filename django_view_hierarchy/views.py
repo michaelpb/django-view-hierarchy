@@ -1,19 +1,10 @@
 from django.urls import reverse
+from django.views import View
 
-def get_breadcrumb_info_from_view(view):
-    url = view.get_reverse_url()
-    if view.breadcrumb:
-        return str(view.breadcrumb), url
-    return view.get_breadcrumb(), url
-
-def prep_cbv(cls, request, kwargs, args):
-    instance = cls()
-    if hasattr(instance, 'get') and not hasattr(instance, 'head'):
-        instance.head = instance.get
-    instance.request = request
-    instance.args = args
-    instance.kwargs = kwargs
-    return instance
+from django_view_hierarchy.utils import (
+    get_info_from_cbv_instance,
+    set_request_breadcrumbs,
+)
 
 class BreadcrumbMixin:
     breadcrumb = None
@@ -31,30 +22,11 @@ class BreadcrumbMixin:
             return str(obj)
         return str(self.__name__)  # Default to name of this view
 
-    def set_request_breadcrumbs(self):
-        bc_sources = self.request.breadcrumbs.bc_sources
-        for cbv, arg_names in bc_sources:
-            if not hasattr(cbv, 'breadcrumb'):
-                raise ValueError('"%s" invalid breadcrumb view'
-                                 % str(cbv))
-            # TODO: Fix this:
-            arg_count = len(arg_names)
-            args = self.args[:arg_count]
-            kwargs = {
-                key: value for key, value in self.kwargs.items()
-                if key in arg_names
-            }
-            instance = prep_cbv(cbv, self.request, kwargs, args)
-            title, url = get_breadcrumb_info_from_view(instance)
-            self.request.breadcrumbs.append(title, url)
+    def dispatch(self, *args, **kwargs):
+        # Set up previous breadcrumbs
+        set_request_breadcrumbs(self.request, self.args, self.kwargs)
 
         # Finally, append current breadcrumb
-        title, url = get_breadcrumb_info_from_view(self)
+        title, url = get_info_from_cbv_instance(self)
         self.request.breadcrumbs.append(title, url)
-
-    def dispatch(self, *args, **kwargs):
-        self.set_request_breadcrumbs()
         return super().dispatch(*args, **kwargs)
-
-
-

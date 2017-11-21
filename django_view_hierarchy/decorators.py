@@ -29,7 +29,7 @@ class BreadcrumbList:
     def __iter__(self):
         return iter(self.breadcrumbs)
 
-def add_all_breadcrumbs(parent_views):
+def add_all_breadcrumbs(parent_views, also_set_breadcrumbs=False):
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
@@ -43,9 +43,10 @@ def add_all_breadcrumbs(parent_views):
 # TODO To give the option of non-CBV views, add breadcrumb decorator to
 # attach either strings or callables to views and allows for arbitrary
 # functions to generate breadcrumbs for views. Something like this:
-def breadcrumb(breadcrumb_getter):
+def breadcrumb(breadcrumb_getter, view_name=None):
     def decorator(view_func):
         view_func.breadcrumb = None
+        view_func.view_name = view_name
         if isinstance(breadcrumb_getter, str):
             view_func.breadcrumb = breadcrumb_getter
         else:
