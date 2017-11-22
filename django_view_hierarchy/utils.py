@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.views import View
 
 def get_info_from_cbv_instance(view):
     '''
@@ -27,15 +28,19 @@ def get_info_from_view(view, request, args, kwargs):
 
 def get_info_from_view_or_cbv(view, request, args, kwargs):
     '''
-    Given a view, which could either be an uninstanced Class Based View
-    class, or regular flat view, determine the title and URL.
+    Given a view, which could either be an instanced or uninstanced Class
+    Based View class, or regular flat view, determine the title and URL.
     '''
 
-    if not hasattr(view, 'as_view'):
-        # Assume flat view, get info
+    if not hasattr(view, 'as_view') and not isinstance(view, View):
+        # Simple functional view
         return get_info_from_view(view, request, args, kwargs)
-    instance = prep_cbv(view, request, kwargs, args)
-    return get_info_from_cbv_instance(instance)
+
+    if not isinstance(view, View):  # Instance CBV first
+        view = prep_cbv(view, request, kwargs, args)
+
+    # Is an instanced
+    return get_info_from_cbv_instance(view)
 
 def prep_cbv(cls, request, kwargs, args):
     '''
@@ -51,7 +56,7 @@ def prep_cbv(cls, request, kwargs, args):
     instance.kwargs = kwargs
     return instance
 
-def set_request_breadcrumbs(request, all_args, all_kwargs):
+def set_request_breadcrumbs(view_or_cbv, request, all_args, all_kwargs):
     '''
     Given a request to a view, and all positional and keyword arguments,
     processes request.breadcrumbs to contain info from all parent views.
@@ -77,3 +82,7 @@ def set_request_breadcrumbs(request, all_args, all_kwargs):
         title, url = get_info_from_view_or_cbv(view, request, args, kwargs)
         request.breadcrumbs.append(title, url)
 
+    # Finally, append current breadcrumb
+    title, url = get_info_from_view_or_cbv(
+        view_or_cbv, request, all_args, all_kwargs)
+    request.breadcrumbs.append(title, url)

@@ -38,6 +38,11 @@ class UserActivityDetailView(BreadcrumbMixin, View):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
         return HttpResponse('%s | User_%i activity' % (bc_str, int(pk)))
 
+@breadcrumb('Followers')
+def user_followers_view(request, pk):
+    bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+    return HttpResponse('%s | User_%i followers' % (bc_str, int(pk)))
+
 @breadcrumb('Projects')
 def project_list_view(request):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
@@ -53,6 +58,13 @@ def project_activity_view(request, pk):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
     return HttpResponse('%s | Project_%i activity' % (bc_str, int(pk)))
 
+class ForkDetailView(BreadcrumbMixin, View):
+    breadcrumb = 'Forks'
+
+    def get(self, request, pk):
+        bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+        return HttpResponse('%s | Project_%i forks' % (bc_str, int(pk)))
+
 TEST_BREADCRUMB_HIERARCHY = {
     # Class based views
     'users': {
@@ -60,6 +72,7 @@ TEST_BREADCRUMB_HIERARCHY = {
         '(?P<pk>\d+)': {
             '': UserDetailView,
             'activity': UserActivityDetailView,
+            'followers': user_followers_view, # mixed flat and CBV
         },
     },
 
@@ -69,6 +82,7 @@ TEST_BREADCRUMB_HIERARCHY = {
         '(?P<pk>\d+)': {
             '': project_detail_view,
             'activity': project_activity_view,
+            'forks': ForkDetailView,  # Mixed flat and CBV
         },
     },
 }
@@ -120,7 +134,7 @@ class TestCBVRoutes(SimpleTestCase):
 
 
 @override_settings(ROOT_URLCONF=__name__)
-class TestFlatRoutes(SimpleTestCase):
+class TestFunctionalViewRoutes(SimpleTestCase):
     def setUp(self):
         self.client = Client()
 
@@ -140,7 +154,6 @@ class TestFlatRoutes(SimpleTestCase):
 
 
     def test_rendered_breadcrumbs_for_flat_views(self):
-        return
         paths = ['/projects/', '/projects/2/', '/projects/2/activity/']
 
         # Check all paths for initial breadcrumb
@@ -163,4 +176,34 @@ class TestFlatRoutes(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         bc = b'<a href="/projects/2/activity/">Pactivity</a>'
         self.assertIn(bc, response.content)
+
+
+@override_settings(ROOT_URLCONF=__name__)
+class TestMixedRoutes(SimpleTestCase):
+    def test_cbv_inheriting_func(self):
+        # Check final path for all breadcrumbs and text breadcrumb
+        response = self.client.get('/projects/123/forks/')
+        self.assertEqual(response.status_code, 200)
+        c = response.content
+
+        # Check text
+        self.assertIn(b'Project_123 forks', c)
+
+        # Check breadcrumbs
+        self.assertIn(b'<a href="/projects/">Projects</a>', response.content)
+        self.assertIn(b'<a href="/projects/123/">p123</a>', c)
+        self.assertIn(b'<a href="/projects/123/forks/">Forks</a>', c)
+
+
+    def test_functional_child_of_cbv(self):
+        # Check final path for final breadcrumb
+        response = self.client.get('/users/2/followers/')
+        self.assertEqual(response.status_code, 200)
+
+        # Check breadcrumbs
+        c = response.content
+        self.assertIn(b'User_2 followers', c)
+        self.assertIn(b'<a href="/users/">Users</a>', c)
+        self.assertIn(b'<a href="/users/2/">u2</a>', c)
+        self.assertIn(b'<a href="/users/2/followers/">Followers</a>', c)
 

@@ -17,11 +17,23 @@ Django DjangoViewHiearchy
 * **NOTE:** Presently *only* supports Python 3.5+ and Django 1.9+ (see `issue
   #1 <https://github.com/michaelpb/django_view_hierarchy/issues/1>`_)
 
-Hierarchical view system Python Django.
+Hierarchical view system Python Django. Define an arbitrary hierarchical
+URL structure in your ``urls.py``, define how breadcrumbs get generated for
+each view, and then this package will automatically generate breadcrumbs
+attached to the request object that can be easily rendered in any page, to
+easily link "up" the view hierarchy.
 
-Provides a set of helpers for constructing meaningful hierarchical Class Based
-Views, and context processes for very easily including breadcrumbs, tabs, etc
-in the templates.
+Features
+------------
+
+* Supports both Class Based Views and simple functional views
+
+* Auto-generates an ``urlpatterns`` for any nested URL pattern, keeping
+  your ``urlpatterns`` more DRY
+
+* Automatically generates breadcrumbs with both title and URL available as
+  ``request.breadcrumbs`` for each node in ancestor tree
+
 
 Quick start
 ------------
@@ -30,7 +42,7 @@ Quick start
 
 1. Install django_view_hierarchy and put in requirements file
 2. Add to INSTALLED_APPS
-3. TODO
+3. Create a view hierarchy with one or more
 
 ---------------
 
@@ -55,10 +67,86 @@ In your ``settings.py`` file, add something like:
         ...
     )
 
-3. Implement DjangoViewHiearchy interface in one or urls
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+3. Use decorator or mixin to add view hierarchy to views
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO
+For Class Based Views, do the following:
+
+.. code-block:: python
+
+    from django.views import View
+    from django_view_hierarchy.views import BreadcrumbMixin
+
+    class UserList(BreadcrumbMixin, View):
+        breadcrumb = 'All users'    # Static
+
+For more complicated examples, you may need to specify a breadcrumb that
+involves fetching data from the DB or giving your view a name:
+
+.. code-block:: python
+    class UserDetailView(BreadcrumbMixin, View):
+        view_name = 'user_details'  # Optionally give view a name
+        def get_breadcrumb(self):
+            pk = self.kwargs['pk']
+            user = User.objects.get(pk=pk)
+            return user.username
+
+For function-style views, you can do the same thing as follows:
+
+.. code-block:: python
+    from django_view_hierarchy.decorators import breadcrumb
+
+    @breadcrumb('Users')
+    def user_list_view(request):
+        return render_to_response('...')
+
+    @breadcrumb(lambda request, pk: User.objects.get(pk).username, 'user_details')
+    def user_detail_view(request, pk):
+        return render_to_response('...')
+
+
+4. Configure hierarchy in urls.py
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For example, to make a set of views like:
+
+* ``/users/``  for a list of all users
+* ``/users/<userid>/``  for a particular user
+* ``/users/<userid>/followers/``  for a sub-page of a particular user,
+  showing off their followers
+
+The hierarchy can be built like:
+
+.. code-block:: python
+    from django_view_hierarchy.helpers import view_hierarchy
+    urlpatterns = view_hierarchy({
+        'users': {
+            '': UserListView,
+            '(?P<pk>\d+)': {
+                '': UserDetailView,
+                'followers': user_followers_view,
+            },
+        },
+    })
+
+Note that Class Based Views *should not* include `as_view`, this will be
+done automatically.
+
+
+5. Use breadcrumbs in views and/or templates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+.. code-block:: html
+
+    <ul>
+        {% for breadcrumb in request.breadcrumbs %}
+            <li>
+                <a href="{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
 
 Credits
 -------

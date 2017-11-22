@@ -22,34 +22,24 @@ def _flatten_hierarchy(hierarchy, prefix=''):
     # To make predictable re. ordering, always return alphabetically
     return sorted(results, key=lambda item: item[0])
 
-def _wrap_view(parents, original_view):
-    # TODO: Once tested, refactor To not loop through parents
-    parent_views = []
-    for parent, arg_names in parents:
-        parent_views.append((parent, arg_names))
+def _wrap_view(parent_views, view):
+    if not hasattr(view, 'breadcrumb'):
+        view_name = view.__name__
+        raise ValueError('Invalid view: %s' % view.__name__)
 
-    if hasattr(original_view, 'as_view'):
-        # Is a class based original_view
-        view = original_view.as_view()
-    elif hasattr(original_view, 'breadcrumb'):
-        view = original_view
+    also_set_breadcrumbs = False
+    if hasattr(view, 'as_view'):
+        # Is a class based view, call as_view first
+        wrapped_view = add_all_breadcrumbs(parent_views)(view.as_view())
     else:
-        view_name = original_view.__name__
-        raise ValueError('Unsupported view: %s' % view_name)
+        # Is a classic functional view, be sure to add breadcrumbs too
+        wrapped_view = add_all_breadcrumbs(parent_views, True)(view)
 
-    # Wrap view with the add_all_breadcrumbs helper
-    wrapped_view = add_all_breadcrumbs(parent_views)(view)
-    original_view._plain_view = wrapped_view
+    # Set up view_name with default and return
+    if not view.view_name:
+        view.view_name = view.__name__
+    wrapped_view._view_name = view.view_name
 
-    # Set up view name variables from view
-    if original_view.view_name is None:
-        view_name = original_view.__name__
-        original_view.view_name = view_name
-    else:
-        view_name = original_view.view_name
-    wrapped_view._view_name = view_name
-
-    # Return prepped wrapped view
     return wrapped_view
 
 def _generate_breadcrumb_hierarchy(hierarchy, views=tuple(), args=tuple()):
@@ -80,29 +70,6 @@ def _generate_breadcrumb_hierarchy(hierarchy, views=tuple(), args=tuple()):
 def view_hierarchy(hierarchy):
     '''
     Given a dict structuring a hierarchy of views, produces an urlpatterns
-
-    As an example:
-
-    >>> def user_list(request): pass
-    >>> def view_user(request, uid): pass
-    >>> def user_history(request, uid): pass
-    >>> urlpatterns = vh({
-    ...     'users': {
-    ...         '': user_list,
-    ...         '(?P<uid>\d+)': {
-    ...             '': user_view,
-    ...             'activity': {
-    ...                 user_view_activity,
-    ...             },
-    ...         },
-    ...     },
-    ... })
-    >>> urlpatterns
-    [
-        url('^users/$', user_list),
-        url('^users/(?P<uid>\d+)/$', user_view),
-        url('^users/(?P<uid>\d+)/activity/$', user_view_activity),
-    ]
     '''
     wrapped_hierarchy = _generate_breadcrumb_hierarchy(hierarchy)
     flattened = _flatten_hierarchy(wrapped_hierarchy)

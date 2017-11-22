@@ -1,10 +1,6 @@
 from django.urls import reverse
-from django.views import View
 
-from django_view_hierarchy.utils import (
-    get_info_from_cbv_instance,
-    set_request_breadcrumbs,
-)
+from django_view_hierarchy.utils import set_request_breadcrumbs
 
 class BreadcrumbMixin:
     breadcrumb = None
@@ -24,9 +20,5 @@ class BreadcrumbMixin:
 
     def dispatch(self, *args, **kwargs):
         # Set up previous breadcrumbs
-        set_request_breadcrumbs(self.request, self.args, self.kwargs)
-
-        # Finally, append current breadcrumb
-        title, url = get_info_from_cbv_instance(self)
-        self.request.breadcrumbs.append(title, url)
+        set_request_breadcrumbs(self, self.request, self.args, self.kwargs)
         return super().dispatch(*args, **kwargs)
