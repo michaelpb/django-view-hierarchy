@@ -11,17 +11,18 @@ Django DjangoViewHiearchy
 .. image:: https://codecov.io/gh/michaelpb/django_view_hierarchy/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/michaelpb/django_view_hierarchy
 
-* **WIP:** This app is still being developed and documented! Use at your
-  own risk.
+* **WIP:** This app is still being developed and documented!
 
 * **NOTE:** Presently *only* supports Python 3.5+ and Django 1.9+ (see `issue
   #1 <https://github.com/michaelpb/django_view_hierarchy/issues/1>`_)
 
-Hierarchical view system Python Django. Define an arbitrary hierarchical
-URL structure in your ``urls.py``, define how breadcrumbs get generated for
-each view, and then this package will automatically generate breadcrumbs
-attached to the request object that can be easily rendered in any page, to
-easily link "up" the view hierarchy.
+Hierarchical view system for Python Django.
+
+Define an arbitrary hierarchical URL structure in your ``urls.py``, define
+how breadcrumbs get generated for each view, and then this package will
+automatically generate an ``urlpatterns`` list and breadcrumbs attached to
+the request object that can be easily rendered in any page, to easily link
+"up" the view hierarchy.
 
 Features
 ------------
@@ -29,11 +30,13 @@ Features
 * Supports both Class Based Views and simple functional views
 
 * Auto-generates an ``urlpatterns`` for any nested URL pattern, keeping
-  your ``urlpatterns`` more DRY
+  your ``urlpatterns`` more DRY instead of repeating common URL pattern
+  elements
 
 * Automatically generates breadcrumbs with both title and URL available as
   ``request.breadcrumbs`` for each node in ancestor tree
 
+* Simple Python package: No configuration changes needed
 
 Quick start
 ------------
@@ -41,33 +44,20 @@ Quick start
 **Overview:**
 
 1. Install django_view_hierarchy and put in requirements file
-2. Add to INSTALLED_APPS
-3. Create a view hierarchy with one or more
+2. Using decorators or mixins, enhance some views to be "breadcrumb aware"
+3. Create a view hierarchy in an urlpatterns including these views
 
 ---------------
 
 1. Install
 ~~~~~~~~~~
 
-
 .. code-block:: bash
 
     pip install django_view_hierarchy
 
-2. Add to INSTALLED_APPS
-~~~~~~~~~~~~~~~~~~~~~~~~
 
-In your ``settings.py`` file, add something like:
-
-.. code-block:: python
-
-    INSTALLED_APPS = (
-        ...
-        'django_view_hierarchy.apps.DjangoViewHiearchyConfig',
-        ...
-    )
-
-3. Use decorator or mixin to add view hierarchy to views
+2. Use decorator or mixin to add view hierarchy to views
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For Class Based Views, do the following:
@@ -105,7 +95,7 @@ For function-style views, you can do the same thing as follows:
         return render_to_response('...')
 
 
-4. Configure hierarchy in urls.py
+3. Configure hierarchy in urls.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For example, to make a set of views like:
