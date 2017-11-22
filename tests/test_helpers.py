@@ -14,10 +14,19 @@ from django.test import SimpleTestCase
 from django_view_hierarchy import helpers
 
 # Some helper functions
+
+
 def user_list(request): pass
+
+
 def post_list(request): pass
+
+
 def user_view(request, uid): pass
+
+
 def user_view_activity(request, uid): pass
+
 
 TEST_HIERARCHY = {
     'users/': {
@@ -29,6 +38,7 @@ TEST_HIERARCHY = {
     },
     'posts': post_list,
 }
+
 
 class TestFlattenHierarchy(SimpleTestCase):
     def test_empty_hierarchy(self):
@@ -83,6 +93,7 @@ class TestGenerateBreadcrumbHierarchy(SimpleTestCase):
         # Test a few properties of a flat hierarchy
         request = MagicMock()
         request.was_called = False
+
         def fake_view(request):
             self.assertTrue(hasattr(request, 'breadcrumbs'))
             # Breadcrumbs length should be 0
@@ -105,6 +116,7 @@ class TestGenerateBreadcrumbHierarchy(SimpleTestCase):
     def test_layered_hierarchy(self):
         request = MagicMock()
         request.was_called = False
+
         def fake_view(request):
             self.assertTrue(hasattr(request, 'breadcrumbs'))
             # Breadcrumbs length should be 0
@@ -138,11 +150,12 @@ class TestGenerateBreadcrumbHierarchy(SimpleTestCase):
     def test_layered_hierarchy_with_parameters(self):
         request = MagicMock()
         request.was_called = False
+
         def fake_view(request):
             # Ensure that there are 1 and 2 params for breadcrumbs
             sources = request.breadcrumbs.bc_sources
             self.assertEqual([count for view, count in sources],
-                [('g', ), ('g', 'pk')])
+                             [('g', ), ('g', 'pk')])
             request.was_called = True
 
         FakeCBV = MagicMock()
@@ -159,4 +172,3 @@ class TestGenerateBreadcrumbHierarchy(SimpleTestCase):
         self.assertFalse(request.was_called)
         results[r'u-(?P<g>\d+)'][r'(?P<pk>\d+)']['activity'](request)
         self.assertTrue(request.was_called)
-

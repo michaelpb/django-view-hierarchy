@@ -3,12 +3,14 @@ from functools import wraps
 
 from django_view_hierarchy.utils import set_request_breadcrumbs
 
+
 class Breadcrumb(namedtuple('Breadcrumb', ['title', 'url'])):
     def __str__(self):
         return '<a href="%s">%s</a>' % (
             self.url,
             self.title,
         )
+
 
 class BreadcrumbList:
     def __init__(self):
@@ -39,6 +41,7 @@ class BreadcrumbList:
     def __iter__(self):
         return iter(self.breadcrumbs)
 
+
 def add_all_breadcrumbs(parent_views, also_set_breadcrumbs=False):
     def decorator(view_func):
         @wraps(view_func)
@@ -56,6 +59,7 @@ def add_all_breadcrumbs(parent_views, also_set_breadcrumbs=False):
         return _wrapped_view
     return decorator
 
+
 def breadcrumb(breadcrumb_getter, view_name=None):
     '''
     Given a string or a function which takes the same sort of arguments as
@@ -72,4 +76,3 @@ def breadcrumb(breadcrumb_getter, view_name=None):
             view_func.get_breadcrumb = breadcrumb_getter
         return view_func
     return decorator
-

@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.views import View
 
+
 def get_info_from_cbv_instance(view):
     '''
     Given a Class Based View Instance, determine the title and URL.
@@ -9,6 +10,7 @@ def get_info_from_cbv_instance(view):
     if view.breadcrumb:
         return str(view.breadcrumb), url
     return view.get_breadcrumb(), url
+
 
 def get_info_from_view(view, request, args, kwargs):
     '''
@@ -26,6 +28,7 @@ def get_info_from_view(view, request, args, kwargs):
         url = reverse(view, args=args, kwargs=kwargs)
     return title, url
 
+
 def get_info_from_view_or_cbv(view, request, args, kwargs):
     '''
     Given a view, which could either be an instanced or uninstanced Class
@@ -42,6 +45,7 @@ def get_info_from_view_or_cbv(view, request, args, kwargs):
     # Is an instanced
     return get_info_from_cbv_instance(view)
 
+
 def prep_cbv(cls, request, kwargs, args):
     '''
     Given a Class Based View class, a request, and kwargs and args,
@@ -55,6 +59,7 @@ def prep_cbv(cls, request, kwargs, args):
     instance.args = args
     instance.kwargs = kwargs
     return instance
+
 
 def set_request_breadcrumbs(view_or_cbv, request, all_args, all_kwargs):
     '''

@@ -2,6 +2,7 @@ from django.urls import reverse
 
 from django_view_hierarchy.utils import set_request_breadcrumbs
 
+
 class BreadcrumbMixin:
     breadcrumb = None
     view_name = None

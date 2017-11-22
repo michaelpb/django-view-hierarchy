@@ -1,11 +1,11 @@
 import re
 
 from django.conf.urls import url
-from contextlib import contextmanager
 
 from django_view_hierarchy.decorators import add_all_breadcrumbs
 
 GROUP_RE = re.compile(r'\(?P<(\w+)>[^\)]+\)')
+
 
 def _flatten_hierarchy(hierarchy, prefix=''):
     results = []
@@ -22,12 +22,12 @@ def _flatten_hierarchy(hierarchy, prefix=''):
     # To make predictable re. ordering, always return alphabetically
     return sorted(results, key=lambda item: item[0])
 
+
 def _wrap_view(parent_views, view):
     if not hasattr(view, 'breadcrumb'):
-        view_name = view.__name__
+        view.__name__
         raise ValueError('Invalid view: %s' % view.__name__)
 
-    also_set_breadcrumbs = False
     if hasattr(view, 'as_view'):
         # Is a class based view, call as_view first
         wrapped_view = add_all_breadcrumbs(parent_views)(view.as_view())
@@ -41,6 +41,7 @@ def _wrap_view(parent_views, view):
     wrapped_view._view_name = view.view_name
 
     return wrapped_view
+
 
 def _generate_breadcrumb_hierarchy(hierarchy, views=tuple(), args=tuple()):
     results = {}
@@ -67,6 +68,7 @@ def _generate_breadcrumb_hierarchy(hierarchy, views=tuple(), args=tuple()):
             results[key] = _wrap_view(parents, view)
     return results
 
+
 def view_hierarchy(hierarchy):
     '''
     Given a dict structuring a hierarchy of views, produces an urlpatterns
@@ -76,4 +78,3 @@ def view_hierarchy(hierarchy):
     return [
         url(path, view, name=view._view_name) for path, view in flattened
     ]
-

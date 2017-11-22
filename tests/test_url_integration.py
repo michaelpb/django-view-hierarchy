@@ -1,5 +1,5 @@
 from django.test import Client
-from django.test import TestCase, override_settings
+from django.test import override_settings
 from django.test import SimpleTestCase
 
 # from django.views.generic import ListView
@@ -12,12 +12,15 @@ from django_view_hierarchy.views import BreadcrumbMixin
 from django_view_hierarchy.decorators import breadcrumb
 
 # Non-generic CBV
+
+
 class UserListView(BreadcrumbMixin, View):
     breadcrumb = 'Users'
 
     def get(self, request):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
         return HttpResponse('%s | User list view' % bc_str)
+
 
 class UserDetailView(BreadcrumbMixin, View):
     breadcrumb = None
@@ -31,6 +34,7 @@ class UserDetailView(BreadcrumbMixin, View):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
         return HttpResponse('%s | User_%i detail view' % (bc_str, int(pk)))
 
+
 class UserActivityDetailView(BreadcrumbMixin, View):
     breadcrumb = 'Activity'
 
@@ -38,25 +42,30 @@ class UserActivityDetailView(BreadcrumbMixin, View):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
         return HttpResponse('%s | User_%i activity' % (bc_str, int(pk)))
 
+
 @breadcrumb('Followers')
 def user_followers_view(request, pk):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
     return HttpResponse('%s | User_%i followers' % (bc_str, int(pk)))
+
 
 @breadcrumb('Projects')
 def project_list_view(request):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
     return HttpResponse('%s | Project list view' % bc_str)
 
+
 @breadcrumb(lambda request, pk: 'p%i' % int(pk))
 def project_detail_view(request, pk):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
     return HttpResponse('%s | Project_%i details' % (bc_str, int(pk)))
 
+
 @breadcrumb('Pactivity')
 def project_activity_view(request, pk):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
     return HttpResponse('%s | Project_%i activity' % (bc_str, int(pk)))
+
 
 class ForkDetailView(BreadcrumbMixin, View):
     breadcrumb = 'Forks'
@@ -65,6 +74,7 @@ class ForkDetailView(BreadcrumbMixin, View):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
         return HttpResponse('%s | Project_%i forks' % (bc_str, int(pk)))
 
+
 TEST_BREADCRUMB_HIERARCHY = {
     # Class based views
     'users': {
@@ -72,7 +82,7 @@ TEST_BREADCRUMB_HIERARCHY = {
         '(?P<pk>\d+)': {
             '': UserDetailView,
             'activity': UserActivityDetailView,
-            'followers': user_followers_view, # mixed flat and CBV
+            'followers': user_followers_view,  # mixed flat and CBV
         },
     },
 
@@ -88,6 +98,7 @@ TEST_BREADCRUMB_HIERARCHY = {
 }
 
 urlpatterns = helpers.view_hierarchy(TEST_BREADCRUMB_HIERARCHY)
+
 
 @override_settings(ROOT_URLCONF=__name__)
 class TestCBVRoutes(SimpleTestCase):
@@ -152,7 +163,6 @@ class TestFunctionalViewRoutes(SimpleTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Project_555 activity', response.content)
 
-
     def test_rendered_breadcrumbs_for_flat_views(self):
         paths = ['/projects/', '/projects/2/', '/projects/2/activity/']
 
@@ -194,7 +204,6 @@ class TestMixedRoutes(SimpleTestCase):
         self.assertIn(b'<a href="/projects/123/">p123</a>', c)
         self.assertIn(b'<a href="/projects/123/forks/">Forks</a>', c)
 
-
     def test_functional_child_of_cbv(self):
         # Check final path for final breadcrumb
         response = self.client.get('/users/2/followers/')
@@ -206,4 +215,3 @@ class TestMixedRoutes(SimpleTestCase):
         self.assertIn(b'<a href="/users/">Users</a>', c)
         self.assertIn(b'<a href="/users/2/">u2</a>', c)
         self.assertIn(b'<a href="/users/2/followers/">Followers</a>', c)
-
