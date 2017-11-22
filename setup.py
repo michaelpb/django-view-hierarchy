@@ -47,11 +47,11 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 setup(
     name='django_view_hierarchy',
     version=version,
-    description="""Flexible activity stream supporting multiple associated objects and fast denormalized look-ups""",
+    description="""Hierarchical view system Python Django with breadcrumbs""",
     long_description=readme + '\n\n' + history,
     author='michaelb',
     author_email='michaelpb@gmail.com',
-    url='https://github.com/michaelpb/django_view_hierarchy',
+    url='https://github.com/michaelpb/django-view-hierarchy',
     packages=[
         'django_view_hierarchy',
     ],
