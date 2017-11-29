@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from django.contrib import admin
 from microblog import views
 from django_view_hierarchy.helpers import view_hierarchy
 

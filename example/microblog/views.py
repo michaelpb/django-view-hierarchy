@@ -3,13 +3,16 @@ from django.shortcuts import redirect, render
 from microblog.forms import AuthorForm, FollowForm, MicroPostForm
 from microblog.models import Author, MicroPost
 
+
 @breadcrumb('Home page')
 def home(request):
     return render(request, 'home.html')
 
+
 @breadcrumb('About', groups=('title',))
 def about(request):
     return render(request, 'home.html', {'content': 'about page: <a href="contact">contact page</a>'})
+
 
 @breadcrumb('Contact', groups=('title',))
 def about_contact(request):
@@ -53,6 +56,7 @@ def view_posts(request, username):
         'micro_post_form': MicroPostForm(initial={'author': author}),
         'username': username,
     })
+
 
 @breadcrumb('All authors')
 def all_authors(request):

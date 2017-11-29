@@ -238,4 +238,3 @@ class TestBreadcrumbGroupsTitle(SimpleTestCase):
         response = self.client.get('/users/5/activity/')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'title:Activity - u5 |', response.content)
-
