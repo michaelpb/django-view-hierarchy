@@ -1,10 +1,22 @@
-from django_view_hierarchy.helpers import EventDictPaginator
+from django_view_hierarchy.decorators import breadcrumb
 from django.shortcuts import redirect, render
 from microblog.forms import AuthorForm, FollowForm, MicroPostForm
 from microblog.models import Author, MicroPost
 
+@breadcrumb('Home page')
+def home(request):
+    return render(request, 'home.html')
 
-def index(request):
+@breadcrumb('About', groups=('title',))
+def about(request):
+    return render(request, 'home.html', {'content': 'about page: <a href="contact">contact page</a>'})
+
+@breadcrumb('Contact', groups=('title',))
+def about_contact(request):
+    return render(request, 'home.html', {'content': 'about contact page'})
+
+
+def creation(request):
     return render(request, 'index.html', {
         'author_form': AuthorForm(),
         'follow_form': FollowForm(),
@@ -28,15 +40,22 @@ def new_follow(request):
     return redirect('/')
 
 
+@breadcrumb(
+    lambda request, username: Author.objects.get(name=username).name
+)
 def view_posts(request, username):
     author = Author.objects.get(name=username)
     if request.method == 'POST':
         AuthorForm(request.POST, instance=author).save()
         return redirect(author.get_absolute_url())
     return render(request, 'posts.html', {
-        'activities': EventDictPaginator(author, 100).page(1),
-        'form': AuthorForm(instance=author),
         'posts': MicroPost.objects.filter(author__name=username),
         'micro_post_form': MicroPostForm(initial={'author': author}),
         'username': username,
+    })
+
+@breadcrumb('All authors')
+def all_authors(request):
+    return render(request, 'all_authors.html', {
+        'authors': Author.objects.all(),
     })

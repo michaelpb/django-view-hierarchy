@@ -19,11 +19,13 @@ class UserListView(BreadcrumbMixin, View):
 
     def get(self, request):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+        bc_str = 'title:%s | %s' % (request.breadcrumbs.title, bc_str)
         return HttpResponse('%s | User list view' % bc_str)
 
 
 class UserDetailView(BreadcrumbMixin, View):
     breadcrumb = None
+    breadcrumb_groups = ('title', )
     # view_name = 'user_details'
 
     def get_breadcrumb(self):
@@ -32,20 +34,24 @@ class UserDetailView(BreadcrumbMixin, View):
 
     def get(self, request, pk):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+        bc_str = 'title:%s | %s' % (request.breadcrumbs.title, bc_str)
         return HttpResponse('%s | User_%i detail view' % (bc_str, int(pk)))
 
 
 class UserActivityDetailView(BreadcrumbMixin, View):
     breadcrumb = 'Activity'
+    breadcrumb_groups = ('title', )
 
     def get(self, request, pk):
         bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+        bc_str = 'title:%s | %s' % (request.breadcrumbs.title, bc_str)
         return HttpResponse('%s | User_%i activity' % (bc_str, int(pk)))
 
 
-@breadcrumb('Followers')
+@breadcrumb('Followers', groups=('title', ))
 def user_followers_view(request, pk):
     bc_str = ' '.join(str(bc) for bc in request.breadcrumbs)
+    bc_str = 'title:%s | %s' % (request.breadcrumbs.title, bc_str)
     return HttpResponse('%s | User_%i followers' % (bc_str, int(pk)))
 
 
@@ -215,3 +221,21 @@ class TestMixedRoutes(SimpleTestCase):
         self.assertIn(b'<a href="/users/">Users</a>', c)
         self.assertIn(b'<a href="/users/2/">u2</a>', c)
         self.assertIn(b'<a href="/users/2/followers/">Followers</a>', c)
+
+
+@override_settings(ROOT_URLCONF=__name__)
+class TestBreadcrumbGroupsTitle(SimpleTestCase):
+    def test_view_routes(self):
+        # Tests that the GET routes are all set up as expected
+        response = self.client.get('/users/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'title:Users |', response.content)
+
+        response = self.client.get('/users/5/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'title:u5 |', response.content)
+
+        response = self.client.get('/users/5/activity/')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'title:Activity - u5 |', response.content)
+

@@ -1,14 +1,25 @@
 from django.conf.urls import url
 from django.contrib import admin
-from microblog import views as mb_views
+from microblog import views
+from django_view_hierarchy.helpers import view_hierarchy
 
-urlpatterns = [
-    url(r'^$', mb_views.index),
-    url(r'^new-author/$', mb_views.new_author),
-    url(r'^new-post/$', mb_views.new_post),
-    url(r'^new-follow/$', mb_views.new_follow),
+urlpatterns = view_hierarchy({
+    '': views.home,
+    'about': {
+        '': views.about,
+        'contact': views.about_contact,
+    },
+    'posts': {
+        '': views.all_authors,
+        '(?P<username>\w{0,50})/': views.view_posts,
+    },
+}) + [
+    url(r'^creation/$', views.creation),
 
-    url(r'^posts/(?P<username>\w{0,50})/$', mb_views.view_posts),
-    url(r'^admin/', admin.site.urls),
+    url(r'^new-author/$', views.new_author),
+    url(r'^new-post/$', views.new_post),
+    url(r'^new-follow/$', views.new_follow),
+
+    #url(r'^admin/', admin.site.urls),
     # url(r'', include('django_view_hierarchy.urls', namespace='django_view_hierarchy')),
 ]

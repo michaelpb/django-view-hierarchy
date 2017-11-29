@@ -85,9 +85,9 @@ def set_request_breadcrumbs(view_or_cbv, request, all_args, all_kwargs):
 
         # Determine and append the breadcrumb title and reverse URL
         title, url = get_info_from_view_or_cbv(view, request, args, kwargs)
-        request.breadcrumbs.append(title, url)
+        request.breadcrumbs.append(title, url, view.breadcrumb_groups)
 
     # Finally, append current breadcrumb
     title, url = get_info_from_view_or_cbv(
         view_or_cbv, request, all_args, all_kwargs)
-    request.breadcrumbs.append(title, url)
+    request.breadcrumbs.append(title, url, view_or_cbv.breadcrumb_groups)

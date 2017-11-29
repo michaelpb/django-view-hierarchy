@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block header %}{{ request.breadcrumbs.title }}{% endblock %}
+
+{% block main %}
+
+{% if content %}
+    <p>{{ content|safe }}</p>
+{% else %}
+    home page content
+    <p><a href="/about/">About</a></p>
+    <p><a href="/about/contact/">Contact</a></p>
+{% endif %}
+
+
+{% endblock %}
+

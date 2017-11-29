@@ -6,6 +6,7 @@ from django_view_hierarchy.utils import set_request_breadcrumbs
 class BreadcrumbMixin:
     breadcrumb = None
     view_name = None
+    breadcrumb_groups = None
 
     def get_reverse_url(self):
         return reverse(self.view_name, args=self.args, kwargs=self.kwargs)

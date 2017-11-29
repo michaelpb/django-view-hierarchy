@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
-  <title>{% block title %}django_view_hierarchy{% endblock title %}</title>
+  <title>{% block title %}{{ request.breadcrumbs.title }}{% endblock title %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="">
   <meta name="author" content="">
@@ -19,43 +19,43 @@
 
 <body>
 
-<div class="m-b">
-  <nav class="navbar navbar-dark navbar-static-top bg-inverse">
-    <div class="container">
-      <a class="navbar-brand" href="/">django_view_hierarchy</a>
-      <button type="button" class="navbar-toggler hidden-sm-up pull-xs-right" data-toggle="collapse"
-              data-target="#bs-navbar-collapse-1">
-        &#9776;
-      </button>
-
-      <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-toggleable-xs" id="bs-navbar-collapse-1">
-        <ul class="nav navbar-nav">
-          <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+<div class="container">
+    <a href="/">Home</a> -
+    <a href="/creation/">Creation page</a> -
+    <a href="/posts/">All authors</a>
+    <hr />
 </div>
 
 <div class="container">
 
-    <h1>MICROBLOG - DjangoViewHiearchy example</h1>
+    <h1>{% block header %}MICROBLOG{% endblock %} - <small>DjangoViewHiearchy example</small></h1>
   {% if messages %}
-  {% for message in messages %}
-  <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
-  {% endfor %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">{{ message }}</div>
+    {% endfor %}
   {% endif %}
+  <div class="row m-t-2">
+    <div class="panel">
+        {% for breadcrumb in request.breadcrumbs %}
+            {{ breadcrumb|safe }}
+            {% if not forloop.last %}
+             &gt;
+            {% endif %}
+        {% endfor %}
+    </div>
+  </div>
+  <hr />
 
   {% block content %}
   <div class="row m-t-2">
+    {% block main %}
     <p>Use this document as a way to quick start any new project.</p>
     <p>The current template is loaded from
       <code>django_view_hierarchy/example/templates/base.html</code>. </p>
     <p>Whenever you overwrite the contents of <code>django_view_hierarchy/example/django_view_hierarchy/urls.py</code> with your
       own content, you should see it here.</p>
+    {% endblock main %}
   </div>
   {% endblock content %}
 
